@@ -51,6 +51,7 @@ export class ScenarioRunner {
           message: response.text,
           timestamp: Date.now(),
           latencyMs: response.latencyMs,
+          toolCalls: response.toolCalls.length > 0 ? response.toolCalls : undefined,
         });
 
         context.turns.push({ role: "assistant", message: response.text });

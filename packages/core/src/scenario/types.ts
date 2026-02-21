@@ -28,6 +28,7 @@ export interface TurnRecord {
   message: string;
   timestamp: number;
   latencyMs?: number;
+  toolCalls?: { name: string; arguments: Record<string, unknown> }[];
 }
 
 export interface AgentHandle {

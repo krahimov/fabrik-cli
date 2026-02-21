@@ -27,8 +27,13 @@ Thumbs.db
 # Generated test output
 tests/generated/
 
-# Example/mock agents
-examples/mock-agent.ts
+# Fabrik runtime data
+.fabrik/
+
+# Example/test agents and local config
+examples/
+fabrik.config.ts
+tests/
 
 # Debug logs
 *.log

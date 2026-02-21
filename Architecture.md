@@ -490,7 +490,7 @@ export default defineConfig({
   tests: "./tests",
   llm: {
     provider: "openai",
-    model: "gpt-",
+    model: "gpt-5.3",
     apiKey: "${env.OPENAI_API_KEY}",
   },
   sandbox: {

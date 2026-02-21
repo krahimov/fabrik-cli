@@ -5,6 +5,7 @@ import {
   HttpAdapter,
   loadTestFiles,
   printTerminalReport,
+  readAgentProfile,
   ChatGPTProvider,
   OpenAIProvider,
   AnthropicProvider,
@@ -45,6 +46,17 @@ export async function runRun(options: RunOptions): Promise<void> {
     console.log();
   }
 
+  // Load agent profile if available (for grounded LLM judge assertions)
+  const agentProfile = await readAgentProfile(process.cwd()) ?? undefined;
+  if (agentProfile) {
+    const age = Date.now() - new Date(agentProfile.discoveredAt).getTime();
+    const days = Math.floor(age / (1000 * 60 * 60 * 24));
+    if (days > 7) {
+      console.log(chalk.yellow(`  Warning: Agent profile is ${days} days old. Run \`fabrik gen --refresh\` to update.`));
+      console.log();
+    }
+  }
+
   // Discover tests
   const testsDir = resolve(config.tests ?? "./tests");
   console.log(chalk.dim(`  Loading tests from ${testsDir}...`));
@@ -53,7 +65,7 @@ export async function runRun(options: RunOptions): Promise<void> {
 
   if (scenarios.length === 0) {
     console.log(chalk.yellow("  No test files found."));
-    console.log(chalk.dim('  Run `fabrik gen --description "..."` to generate tests.'));
+    console.log(chalk.dim("  Run `fabrik gen --agent <url>` to generate tests."));
     console.log();
     await adapter.disconnect();
     return;
@@ -71,6 +83,7 @@ export async function runRun(options: RunOptions): Promise<void> {
   // Run scenarios
   const runner = new ScenarioRunner(adapter, llmProvider, {
     timeout: options.timeout ?? config.eval?.defaultTimeout ?? 30000,
+    agentProfile,
   });
 
   const results = await runner.runAll(filtered);
@@ -109,6 +122,7 @@ function buildAgentConfig(agent: {
 function createLlmProvider(llmConfig?: {
   provider: string;
   model?: string;
+  auth?: string;
   apiKey?: string;
   accessToken?: string;
   authPath?: string;

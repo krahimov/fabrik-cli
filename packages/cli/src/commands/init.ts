@@ -64,11 +64,9 @@ export async function runInit(): Promise<void> {
   console.log(chalk.bold("  Next steps:"));
   console.log(chalk.dim("  1. Edit fabrik.config.ts with your agent URL"));
   console.log(chalk.dim("  2. Run `codex login` to authenticate with ChatGPT"));
-  console.log(
-    chalk.dim(
-      '  3. Run: fabrik gen --description "describe your agent"'
-    )
-  );
+  console.log(chalk.dim("  3. Discover & generate: fabrik gen --agent http://localhost:3000/api/chat"));
+  console.log(chalk.dim("     Or from a repo: fabrik gen --repo https://github.com/your/agent"));
+  console.log(chalk.dim("     Or a local dir:  fabrik gen --dir ./path/to/agent"));
   console.log(chalk.dim("  4. Run: fabrik run"));
   console.log();
 }

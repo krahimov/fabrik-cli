@@ -3,6 +3,7 @@ export { scenario, persona } from "./scenario/api.js";
 export type {
   Persona,
   PersonaHandle,
+  PersonaMessage,
   Turn,
   TurnRecord,
   Scenario,
@@ -37,16 +38,36 @@ export type { AnthropicProviderConfig } from "./llm/anthropic.js";
 export { ChatGPTProvider } from "./llm/chatgpt.js";
 export type { ChatGPTProviderConfig } from "./llm/chatgpt.js";
 
+// Discovery
+export { readAgentProfile, writeAgentProfile } from "./discovery/agent-profile.js";
+export type {
+  AgentProfile,
+  DiscoveredTool,
+  RelevantFile,
+  DiscoveryEvidence,
+  AgentSource,
+  EndpointInfo,
+} from "./discovery/agent-profile.js";
+export { discoverAgent } from "./discovery/explorer.js";
+export type { ExplorerOptions, FileReader } from "./discovery/explorer.js";
+export { rankFiles } from "./discovery/file-ranker.js";
+export { extractFromFile } from "./discovery/extractors.js";
+export { probeEndpoint } from "./discovery/http-prober.js";
+
 // Runner
 export { ScenarioRunner } from "./runner.js";
 export type { RunnerOptions } from "./runner.js";
 
 // Code Loader
 export { loadTestFiles } from "./scenario/code-loader.js";
+export { validateScenario } from "./scenario/validator.js";
+export type { ValidationResult } from "./scenario/validator.js";
 
 // Reporter
 export { printTerminalReport } from "./report/terminal.js";
 
 // Generator
-export { TestGenerator } from "./generate/generator.js";
-export type { GenerateOptions, GeneratedFile } from "./generate/generator.js";
+export { TestGenerator, generateTests } from "./generate/generator.js";
+export type { GenerateOptions, GeneratedFile, TestPlan, TestPlanCategory, TestPlanScenario, GeneratedTest } from "./generate/generator.js";
+export { planTests } from "./generate/planner.js";
+export { writeTestFile } from "./generate/writer.js";

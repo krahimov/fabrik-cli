@@ -19,9 +19,14 @@ program
 
 program
   .command("gen")
-  .description("Generate test files from an agent description")
-  .option("--agent <url>", "Agent endpoint URL")
-  .requiredOption("--description <text>", "What the agent does")
+  .description("Discover an agent and generate test files")
+  .option("--repo <url>", "Git repo URL to clone and explore")
+  .option("--dir <path>", "Local directory to explore")
+  .option("--agent <url>", "HTTP endpoint to probe")
+  .option("--assistant <id>", "OpenAI Assistant ID")
+  .option("--refresh", "Force re-discovery even if cached profile exists")
+  .option("--refresh-probes", "Re-run HTTP probes only, keep repo data")
+  .option("--description <text>", "Optional hint about what the agent does")
   .option("--system-prompt <file>", "Path to agent system prompt file")
   .option("--count <n>", "Number of test files to generate", "10")
   .option(
@@ -31,7 +36,12 @@ program
   .option("--output <dir>", "Output directory", "tests/generated")
   .action(async (options) => {
     await runGen({
+      repo: options.repo,
+      dir: options.dir,
       agent: options.agent,
+      assistant: options.assistant,
+      refresh: options.refresh,
+      refreshProbes: options.refreshProbes,
       description: options.description,
       systemPrompt: options.systemPrompt,
       count: parseInt(options.count, 10),

@@ -14,19 +14,33 @@ export interface FabrikConfig {
   llm: {
     provider: "chatgpt" | "openai" | "anthropic" | "ollama" | "custom";
     model?: string;
+    auth?: "chatgpt-session" | "api-key";
     apiKey?: string;
     accessToken?: string;
     authPath?: string;
     baseURL?: string;
+  };
+  sandbox?: {
+    provider: "daytona" | "local";
+    daytona?: {
+      apiKey: string;
+      target?: string;
+    };
   };
   eval?: {
     parallelism?: number;
     retries?: number;
     defaultTimeout?: number;
   };
+  diff?: {
+    regressionThreshold?: number;
+  };
   report?: {
     formats?: string[];
     outputDir?: string;
+  };
+  store?: {
+    path?: string;
   };
 }
 

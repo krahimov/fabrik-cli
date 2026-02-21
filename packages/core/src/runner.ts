@@ -1,12 +1,14 @@
-import type { Scenario, RunResult, TurnRecord, AgentHandle } from "./scenario/types.js";
+import type { Scenario, RunResult, TurnRecord, AgentHandle, PersonaMessage } from "./scenario/types.js";
 import type { AgentAdapter, AgentResponse, ConversationContext } from "./adapter/interface.js";
 import type { LLMProvider } from "./llm/provider.js";
+import type { AgentProfile } from "./discovery/agent-profile.js";
 import { AssertionCollector } from "./assert/collector.js";
 import { _bindGlobalAssert, _unbindGlobalAssert, _drainPendingAssertions } from "./assert/api.js";
 import { calculateScore } from "./assert/scorer.js";
 
 export interface RunnerOptions {
   timeout?: number;
+  agentProfile?: AgentProfile;
 }
 
 export class ScenarioRunner {
@@ -31,16 +33,18 @@ export class ScenarioRunner {
     };
 
     const agentHandle: AgentHandle = {
-      send: async (message: string): Promise<AgentResponse> => {
+      send: async (message: string | PersonaMessage): Promise<AgentResponse> => {
+        const text = typeof message === "string" ? message : message.message;
+
         turns.push({
           role: "persona",
-          message,
+          message: text,
           timestamp: Date.now(),
         });
 
-        context.turns.push({ role: "user", message });
+        context.turns.push({ role: "user", message: text });
 
-        const response = await this.adapter.send(message, context);
+        const response = await this.adapter.send(text, context);
 
         turns.push({
           role: "agent",
@@ -55,8 +59,10 @@ export class ScenarioRunner {
       },
     };
 
+    const scores = new Map<string, number>();
+
     // Bind global assert so `import { assert } from "@fabrik/core"` works
-    _bindGlobalAssert(collector, this.llmProvider);
+    _bindGlobalAssert(collector, this.llmProvider, this.options.agentProfile);
 
     const start = performance.now();
     let error: string | undefined;
@@ -64,7 +70,12 @@ export class ScenarioRunner {
     try {
       const timeoutMs = this.options.timeout ?? 30000;
       await Promise.race([
-        scenario.fn({ agent: agentHandle }),
+        scenario.fn({
+          agent: agentHandle,
+          profile: this.options.agentProfile,
+          scores,
+          score: (name: string, value: number) => scores.set(name, value),
+        }),
         new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error(`Scenario timed out after ${timeoutMs}ms`)), timeoutMs)
         ),

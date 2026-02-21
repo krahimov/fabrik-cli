@@ -1,6 +1,7 @@
 import { readdir } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import type { Scenario } from "./types.js";
+import { validateScenario } from "./validator.js";
 
 export async function loadTestFiles(
   dir: string,
@@ -27,22 +28,27 @@ export async function loadTestFiles(
       const mod = await import(file);
       const exported = mod.default ?? mod;
 
+      const candidates: unknown[] = [];
       if (isScenario(exported)) {
-        exported.filePath = file;
-        scenarios.push(exported);
+        candidates.push(exported);
       } else if (Array.isArray(exported)) {
-        for (const item of exported) {
-          if (isScenario(item)) {
-            item.filePath = file;
-            scenarios.push(item);
-          }
-        }
+        candidates.push(...exported.filter(isScenario));
       } else if (typeof exported === "object" && exported !== null) {
-        for (const value of Object.values(exported)) {
-          if (isScenario(value)) {
-            (value as Scenario).filePath = file;
-            scenarios.push(value as Scenario);
-          }
+        candidates.push(...Object.values(exported).filter(isScenario));
+      }
+
+      for (const candidate of candidates) {
+        const result = validateScenario(candidate);
+        if (result.valid) {
+          (candidate as Scenario).filePath = file;
+          scenarios.push(candidate as Scenario);
+        } else {
+          console.warn(
+            `Warning: Skipping invalid scenario in ${file}: ${result.errors.join(", ")}`
+          );
+        }
+        for (const w of result.warnings) {
+          console.warn(`Warning: ${file}: ${w}`);
         }
       }
     } catch (e) {

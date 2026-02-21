@@ -1,5 +1,6 @@
 import type { AgentResponse } from "../adapter/interface.js";
 import type { LLMProvider } from "../llm/provider.js";
+import type { AgentProfile } from "../discovery/agent-profile.js";
 import type { AssertionCollector } from "./collector.js";
 import {
   SENTIMENT_SYSTEM_PROMPT,
@@ -8,7 +9,22 @@ import {
   FACTUALITY_SYSTEM_PROMPT,
 } from "./prompts.js";
 
-export function createLlmAssertions(collector: AssertionCollector, llmProvider?: LLMProvider) {
+function buildProfileContext(profile?: AgentProfile): string {
+  if (!profile) return "";
+  const parts = [`\nAGENT PROFILE:\n${profile.description}`];
+  if (profile.knownConstraints.length > 0) {
+    parts.push(`Known constraints: ${profile.knownConstraints.join(", ")}`);
+  }
+  if (profile.tools.length > 0) {
+    parts.push(`Available tools: ${profile.tools.map((t) => t.name).join(", ")}`);
+  }
+  if (profile.expectedTone) {
+    parts.push(`Expected tone: ${profile.expectedTone}`);
+  }
+  return parts.join("\n") + "\n";
+}
+
+export function createLlmAssertions(collector: AssertionCollector, llmProvider?: LLMProvider, agentProfile?: AgentProfile) {
   function requireProvider(): LLMProvider {
     if (!llmProvider) {
       throw new Error(
@@ -47,9 +63,10 @@ export function createLlmAssertions(collector: AssertionCollector, llmProvider?:
     async sentiment(response: AgentResponse, expected: string): Promise<void> {
       const start = performance.now();
       try {
+        const profileCtx = buildProfileContext(agentProfile);
         const result = await callJudge(
           SENTIMENT_SYSTEM_PROMPT,
-          `Agent response: "${response.text}"\n\nExpected sentiment: ${expected}`
+          `${profileCtx}Agent response: "${response.text}"\n\nExpected sentiment: ${expected}`
         );
 
         const passed = result.matches === true || (result.score as number) >= 3;
@@ -79,9 +96,10 @@ export function createLlmAssertions(collector: AssertionCollector, llmProvider?:
       const scale = opts.scale ?? 5;
       const start = performance.now();
       try {
+        const profileCtx = buildProfileContext(agentProfile);
         const result = await callJudge(
           LLM_JUDGE_SYSTEM_PROMPT,
-          `Agent response: "${response.text}"\n\nCriteria: ${opts.criteria}\nScale: 1-${scale}`
+          `${profileCtx}Agent response: "${response.text}"\n\nCriteria: ${opts.criteria}\nScale: 1-${scale}`
         );
 
         const score = result.score as number;
@@ -116,9 +134,10 @@ export function createLlmAssertions(collector: AssertionCollector, llmProvider?:
         if (opts.mustNot)
           rules.push(`MUST NOT contain themes/ideas: ${opts.mustNot.join(", ")}`);
 
+        const profileCtx = buildProfileContext(agentProfile);
         const result = await callJudge(
           GUARDRAIL_SYSTEM_PROMPT,
-          `Agent response: "${response.text}"\n\nRules:\n${rules.join("\n")}`
+          `${profileCtx}Agent response: "${response.text}"\n\nRules:\n${rules.join("\n")}`
         );
 
         const passed = result.passed === true;
@@ -149,7 +168,8 @@ export function createLlmAssertions(collector: AssertionCollector, llmProvider?:
     ): Promise<void> {
       const start = performance.now();
       try {
-        let prompt = `Agent response: "${response.text}"\n\nGround truth: ${opts.groundTruth}`;
+        const profileCtx = buildProfileContext(agentProfile);
+        let prompt = `${profileCtx}Agent response: "${response.text}"\n\nGround truth: ${opts.groundTruth}`;
         if (opts.context) prompt += `\nContext: ${opts.context}`;
 
         const result = await callJudge(FACTUALITY_SYSTEM_PROMPT, prompt);

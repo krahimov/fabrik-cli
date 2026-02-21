@@ -1,19 +1,22 @@
+import type { AgentResponse } from "../adapter/interface.js";
+import type { AgentProfile } from "../discovery/agent-profile.js";
+
 export interface Persona {
   role: string;
   name?: string;
   tone?: string;
   backstory?: string;
   context?: Record<string, unknown>;
+  says(message: string): PersonaMessage;
 }
 
-export interface PersonaHandle {
-  role: string;
-  name?: string;
-  tone?: string;
-  backstory?: string;
-  context?: Record<string, unknown>;
-  says(message: string): string;
+export interface PersonaMessage {
+  persona: Persona;
+  message: string;
 }
+
+/** @deprecated Use Persona instead — PersonaHandle is kept for backward compatibility */
+export type PersonaHandle = Persona;
 
 export interface Turn {
   role: "persona" | "agent";
@@ -28,11 +31,14 @@ export interface TurnRecord {
 }
 
 export interface AgentHandle {
-  send(message: string): Promise<import("../adapter/interface.js").AgentResponse>;
+  send(message: string | PersonaMessage): Promise<AgentResponse>;
 }
 
 export interface ScenarioContext {
   agent: AgentHandle;
+  profile?: AgentProfile;
+  scores: Map<string, number>;
+  score(name: string, value: number): void;
 }
 
 export type ScenarioFn = (ctx: ScenarioContext) => Promise<void>;

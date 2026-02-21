@@ -1,0 +1,28 @@
+{
+  "name": "@fabrik/cli",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./src/config.ts",
+  "exports": {
+    ".": "./src/config.ts"
+  },
+  "bin": {
+    "fabrik": "./bin/fabrik.js"
+  },
+  "scripts": {
+    "build": "echo 'CLI uses tsx at runtime, no build needed'",
+    "dev": "tsx src/index.ts",
+    "clean": "echo 'nothing to clean'"
+  },
+  "dependencies": {
+    "@fabrik/core": "workspace:*",
+    "chalk": "^5.4.0",
+    "commander": "^13.0.0",
+    "cosmiconfig": "^9.0.0",
+    "tsx": "^4.19.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "@types/node": "^22.0.0"
+  }
+}

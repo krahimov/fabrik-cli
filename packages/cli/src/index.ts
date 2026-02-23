@@ -2,6 +2,7 @@ import { Command } from "commander";
 import { runInit } from "./commands/init.js";
 import { runGen } from "./commands/gen.js";
 import { runRun } from "./commands/run.js";
+import { runDiff } from "./commands/diff.js";
 
 const program = new Command();
 
@@ -59,6 +60,8 @@ program
   .option("--timeout <ms>", "Override default timeout")
   .option("--format <type>", "Output format: terminal, json, html", "terminal")
   .option("--output <file>", "Write report to file")
+  .option("--save", "Save results to trace store (.fabrik/traces.db)")
+  .option("--label <label>", "Version label for saved results")
   .action(async (options) => {
     await runRun({
       test: options.test,
@@ -67,6 +70,24 @@ program
       timeout: options.timeout ? parseInt(options.timeout, 10) : undefined,
       format: options.format,
       output: options.output,
+      save: options.save,
+      version: options.label,
+    });
+  });
+
+program
+  .command("diff")
+  .description("Compare test results between two versions")
+  .requiredOption("--before <version>", "Base version to compare from")
+  .requiredOption("--after <version>", "Target version to compare to")
+  .option("--threshold <n>", "Score delta threshold for regression detection", "0.05")
+  .option("--json", "Output diff as JSON")
+  .action(async (options) => {
+    await runDiff({
+      before: options.before,
+      after: options.after,
+      threshold: options.threshold ? parseFloat(options.threshold) : undefined,
+      json: options.json,
     });
   });
 

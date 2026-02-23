@@ -1,10 +1,14 @@
 import { resolve } from "node:path";
+import { writeFile } from "node:fs/promises";
 import chalk from "chalk";
 import {
   ScenarioRunner,
   HttpAdapter,
   loadTestFiles,
   printTerminalReport,
+  generateJsonReport,
+  generateHtmlReport,
+  SqliteTraceStore,
   readAgentProfile,
   ChatGPTProvider,
   OpenAIProvider,
@@ -22,6 +26,8 @@ export interface RunOptions {
   timeout?: number;
   format?: string;
   output?: string;
+  save?: boolean;
+  version?: string;
 }
 
 export async function runRun(options: RunOptions): Promise<void> {
@@ -90,6 +96,33 @@ export async function runRun(options: RunOptions): Promise<void> {
 
   // Report
   printTerminalReport(results);
+
+  // Save to trace store if --save
+  if (options.save) {
+    const dbPath = resolve(config.store?.path ?? ".fabrik/traces.db");
+    const version =
+      options.version ?? `run-${new Date().toISOString().replace(/[:.]/g, "-")}`;
+
+    const store = new SqliteTraceStore(dbPath);
+    const meta = store.saveRun(version, results);
+    store.close();
+
+    console.log(chalk.dim(`  Saved as version "${version}" (${meta.id.slice(0, 8)})`));
+    console.log();
+  }
+
+  // Write report file if --output
+  if (options.output) {
+    const outputPath = resolve(options.output);
+    if (options.format === "json") {
+      await writeFile(outputPath, generateJsonReport(results, { version: options.version }), "utf-8");
+      console.log(chalk.dim(`  JSON report → ${outputPath}`));
+    } else if (options.format === "html") {
+      await writeFile(outputPath, generateHtmlReport(results, { version: options.version }), "utf-8");
+      console.log(chalk.dim(`  HTML report → ${outputPath}`));
+    }
+    console.log();
+  }
 
   await adapter.disconnect();
 }

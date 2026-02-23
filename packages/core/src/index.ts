@@ -65,6 +65,19 @@ export type { ValidationResult } from "./scenario/validator.js";
 
 // Reporter
 export { printTerminalReport } from "./report/terminal.js";
+export { generateJsonReport } from "./report/json.js";
+export type { JsonReport } from "./report/json.js";
+export { generateHtmlReport } from "./report/html.js";
+
+// Store
+export type { TraceStore, RunMeta, StoredRun } from "./store/trace.js";
+export { SqliteTraceStore } from "./store/sqlite.js";
+
+// Diff
+export { diffResults } from "./diff/engine.js";
+export type { DiffReport, ScenarioDiff, DiffStatus, DiffSummary, DiffOptions } from "./diff/engine.js";
+export { checkRegressions } from "./diff/regression.js";
+export type { RegressionCheckResult } from "./diff/regression.js";
 
 // Generator
 export { TestGenerator, generateTests } from "./generate/generator.js";

@@ -32,12 +32,85 @@ export async function writeTestFile(
     code = code.replace(/^```(?:typescript|ts)?\n?/, "").replace(/\n?```$/, "");
   }
 
+  // Post-process: strip banned assertion methods that the model insists on generating
+  code = sanitizeBannedAssertions(code);
+
   return {
     fileName: generateFileName(category.slug, scenario.slug),
     category: category.name,
     scenarioName: scenario.name,
     code: wrapGeneratedTest(code),
   };
+}
+
+/**
+ * Strips banned assertion calls from generated code.
+ * The model stubbornly generates toolCalled, toolNotCalled, guardrail, sentiment,
+ * and factuality despite prompts banning them. These rigid assertions cause false
+ * positives. The llmJudge assertions the model ALSO generates are the good ones.
+ */
+function sanitizeBannedAssertions(code: string): string {
+  const lines = code.split("\n");
+  const result: string[] = [];
+
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    // Check if this line starts a banned assertion call
+    if (isBannedAssertionLine(trimmed)) {
+      // Skip this line and any continuation lines (multi-line calls)
+      i = skipMultiLineCall(lines, i);
+      continue;
+    }
+
+    result.push(line);
+    i++;
+  }
+
+  return result.join("\n");
+}
+
+const BANNED_PATTERNS = [
+  /^\s*assert\.toolCalled\s*\(/,
+  /^\s*assert\.toolNotCalled\s*\(/,
+  /^\s*assert\.guardrail\s*\(/,
+  /^\s*assert\.sentiment\s*\(/,
+  /^\s*assert\.factuality\s*\(/,
+  /^\s*assert\.custom\s*\(/,
+];
+
+function isBannedAssertionLine(trimmed: string): boolean {
+  return BANNED_PATTERNS.some((p) => p.test(trimmed));
+}
+
+/**
+ * Skip a multi-line function call that starts at lineIdx.
+ * Counts parentheses to find the end of the call.
+ * Returns the index of the next line AFTER the call.
+ */
+function skipMultiLineCall(lines: string[], lineIdx: number): number {
+  let depth = 0;
+  let i = lineIdx;
+
+  while (i < lines.length) {
+    const line = lines[i];
+    for (const ch of line) {
+      if (ch === "(") depth++;
+      if (ch === ")") depth--;
+    }
+    i++;
+    // Once all parens are closed, we're done
+    if (depth <= 0) break;
+  }
+
+  // Also skip a trailing semicolon-only line or empty line
+  while (i < lines.length && lines[i].trim() === "") {
+    i++;
+  }
+
+  return i;
 }
 
 function buildWriterContext(
@@ -63,7 +136,7 @@ function buildWriterContext(
     parts.push(`- Expected tone: ${profile.expectedTone}`);
   }
   if (profile.systemPrompt) {
-    parts.push(`- System prompt (excerpt): ${profile.systemPrompt.slice(0, 500)}`);
+    parts.push(`- System prompt: ${profile.systemPrompt}`);
   }
 
   parts.push(`\nTest Category: ${category.name} — ${category.description}`);
@@ -77,12 +150,11 @@ function buildWriterContext(
   scenario.turns.forEach((t, i) => {
     parts.push(`${i + 1}. User says: "${t.says}"`);
   });
-  parts.push(`\nAssertions to include:`);
-  scenario.assertions.forEach((a) => {
-    parts.push(`- ${a.type}: ${JSON.stringify(a.config)}`);
-  });
+  parts.push(`\nTest Intent: ${scenario.intent}`);
+  parts.push(`\nSuccess Criteria: ${scenario.successCriteria}`);
+  parts.push(`\nFailure Indicators: ${scenario.failureIndicators}`);
 
-  parts.push(`\nIMPORTANT: Use REAL tool names from the agent profile in assert.toolCalled(). Use REAL constraints from the profile in assert.guardrail(). Reference actual business logic, not generic placeholder text.`);
+  parts.push(`\nREMINDER: Use ONLY assert.llmJudge(), assert.custom(), and assert.contains/notContains. No other assert methods exist. Write rich llmJudge criteria that explain the test intent and accept all valid behaviors. Use assert.custom() for programmatic checks with conditional logic.`);
 
   return parts.join("\n");
 }

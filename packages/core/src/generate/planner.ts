@@ -8,7 +8,9 @@ export interface TestPlanScenario {
   description: string;
   persona: { role: string; tone: string; backstory: string };
   turns: { says: string }[];
-  assertions: { type: string; config: Record<string, unknown> }[];
+  intent: string;
+  successCriteria: string;
+  failureIndicators: string;
 }
 
 export interface TestPlanCategory {

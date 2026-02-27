@@ -5,6 +5,15 @@ export interface FabrikConfig {
     type: "http" | "subprocess" | "openai-assistant" | "custom";
     url?: string;
     headers?: Record<string, string>;
+    /** "messages" sends {messages: [{role,content}]} (OpenAI/Vercel AI SDK format).
+     *  "legacy" sends {message, conversation_id}. Default: "messages". */
+    requestFormat?: "messages" | "legacy";
+    /** Custom function to build the request body */
+    bodyTemplate?: (msg: string, ctx?: { conversationId: string; turns: { role: string; message: string }[] }) => unknown;
+    /** Custom function to extract text from the response */
+    responseParser?: (data: unknown) => string;
+    /** Enable streaming response handling (for AI SDK / SSE endpoints) */
+    streaming?: boolean;
     command?: string;
     args?: string[];
     assistantId?: string;

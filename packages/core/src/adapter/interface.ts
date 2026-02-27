@@ -46,8 +46,12 @@ export type AgentConfig =
       type: "http";
       url: string;
       headers?: Record<string, string>;
+      /** "messages" sends {messages: [{role,content}]}. "legacy" sends {message, conversation_id}. Default: "messages". */
+      requestFormat?: "messages" | "legacy";
       bodyTemplate?: (msg: string, ctx?: ConversationContext) => unknown;
       responseParser?: (data: unknown) => string;
+      /** When true, reads streaming text responses (SSE/AI SDK) instead of calling res.json() */
+      streaming?: boolean;
     }
   | { type: "subprocess"; command: string; args?: string[]; cwd?: string }
   | { type: "openai-assistant"; assistantId: string; apiKey?: string }

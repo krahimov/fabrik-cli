@@ -34,6 +34,8 @@ export async function writeTestFile(
 
   // Post-process: strip banned assertion methods that the model insists on generating
   code = sanitizeBannedAssertions(code);
+  // Ensure async assertion calls are awaited to avoid dropped assertion results.
+  code = enforceAwaitOnAsyncAssertions(code);
 
   return {
     fileName: generateFileName(category.slug, scenario.slug),
@@ -70,6 +72,13 @@ function sanitizeBannedAssertions(code: string): string {
   }
 
   return result.join("\n");
+}
+
+function enforceAwaitOnAsyncAssertions(code: string): string {
+  return code.replace(
+    /^([ \t]*)(?!await\b)(assert\.(?:llmJudge|custom|sentiment|guardrail|factuality)\s*\()/gm,
+    "$1await $2"
+  );
 }
 
 const BANNED_PATTERNS = [
@@ -154,7 +163,7 @@ function buildWriterContext(
   parts.push(`\nSuccess Criteria: ${scenario.successCriteria}`);
   parts.push(`\nFailure Indicators: ${scenario.failureIndicators}`);
 
-  parts.push(`\nREMINDER: Use ONLY assert.llmJudge(), assert.custom(), and assert.contains/notContains. No other assert methods exist. Write rich llmJudge criteria that explain the test intent and accept all valid behaviors. Use assert.custom() for programmatic checks with conditional logic.`);
+  parts.push(`\nREMINDER: Use ONLY assert.llmJudge(), assert.custom(), and assert.contains/notContains. No other assert methods exist. Always await async assertions (await assert.llmJudge(...), await assert.custom(...)). Write rich llmJudge criteria that explain the test intent and accept all valid behaviors. Use assert.custom() for programmatic checks with conditional logic.`);
 
   return parts.join("\n");
 }

@@ -1,14 +1,18 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
+import { execSync } from "node:child_process";
 import { join } from "node:path";
 import chalk from "chalk";
 
-const DEFAULT_CONFIG = `import { defineConfig } from "@fabrik/cli";
+const DEFAULT_CONFIG = `import { defineConfig } from "@fabriklabs/cli";
 
 export default defineConfig({
   agent: {
     type: "http",
     url: "http://localhost:3000/api/chat",
+    // Sends { messages: [{role, content}] } by default (OpenAI/Vercel AI SDK format)
+    // Set requestFormat: "legacy" to send { message, conversation_id } instead
+    streaming: true, // handles streaming responses (AI SDK, SSE)
   },
   tests: "./tests",
   llm: {
@@ -60,6 +64,21 @@ export async function runInit(): Promise<void> {
     console.log(chalk.green("  Created .fabrik/ directory"));
   }
 
+  // Install @fabriklabs/core so generated test files can import from it
+  console.log(chalk.dim("  Installing @fabriklabs/core..."));
+  try {
+    const pm = detectPackageManager(cwd);
+    const installCmd =
+      pm === "pnpm" ? "pnpm add -D @fabriklabs/core" :
+      pm === "yarn" ? "yarn add -D @fabriklabs/core" :
+      "npm install -D @fabriklabs/core";
+    execSync(installCmd, { cwd, stdio: "ignore" });
+    console.log(chalk.green("  Installed @fabriklabs/core"));
+  } catch {
+    console.log(chalk.yellow("  Could not auto-install @fabriklabs/core."));
+    console.log(chalk.yellow("  Run manually: npm install -D @fabriklabs/core"));
+  }
+
   console.log();
   console.log(chalk.bold("  Next steps:"));
   console.log(chalk.dim("  1. Edit fabrik.config.ts with your agent URL"));
@@ -69,4 +88,10 @@ export async function runInit(): Promise<void> {
   console.log(chalk.dim("     Or a local dir:  fabrik gen --dir ./path/to/agent"));
   console.log(chalk.dim("  4. Run: fabrik run"));
   console.log();
+}
+
+function detectPackageManager(cwd: string): "pnpm" | "yarn" | "npm" {
+  if (existsSync(join(cwd, "pnpm-lock.yaml"))) return "pnpm";
+  if (existsSync(join(cwd, "yarn.lock"))) return "yarn";
+  return "npm";
 }

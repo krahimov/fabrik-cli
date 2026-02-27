@@ -1,6 +1,7 @@
 {
   "name": "fabrik",
   "private": true,
+  "license": "MIT",
   "packageManager": "pnpm@10.29.1",
   "type": "module",
   "scripts": {
@@ -9,8 +10,8 @@
     "clean": "turbo clean"
   },
   "dependencies": {
-    "@fabrik/core": "workspace:*",
-    "@fabrik/cli": "workspace:*"
+    "@fabriklabs/core": "workspace:*",
+    "@fabriklabs/cli": "workspace:*"
   },
   "devDependencies": {
     "turbo": "^2.4.0",

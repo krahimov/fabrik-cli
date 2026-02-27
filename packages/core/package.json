@@ -1,13 +1,32 @@
 {
-  "name": "@fabrik/core",
-  "version": "0.1.0",
+  "name": "@fabriklabs/core",
+  "version": "0.1.6",
+  "description": "AI agent testing engine — discovery, test generation, execution, and evaluation",
   "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/krahimov/fabrik-cli.git",
+    "directory": "packages/core"
+  },
+  "keywords": [
+    "ai",
+    "testing",
+    "agents",
+    "llm",
+    "evaluation",
+    "qa"
+  ],
+  "files": [
+    "dist"
+  ],
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/index.cjs"
     }
   },
   "scripts": {
@@ -26,8 +45,12 @@
     "@anthropic-ai/sdk": "^0.30.0"
   },
   "peerDependenciesMeta": {
-    "openai": { "optional": true },
-    "@anthropic-ai/sdk": { "optional": true }
+    "openai": {
+      "optional": true
+    },
+    "@anthropic-ai/sdk": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.0.0",

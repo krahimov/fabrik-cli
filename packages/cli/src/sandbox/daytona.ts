@@ -1,14 +1,33 @@
 import type { SandboxProvider, SandboxHandle, SandboxOpts, ExecOpts, ExecResult } from "./interface.js";
 
+// Minimal type surface for the Daytona SDK — avoids `any` without requiring
+// the package installed at dev time.
+interface DaytonaSandboxInstance {
+  process: {
+    exec(command: string, opts?: { cwd?: string; timeout?: number }): Promise<{ exitCode?: number; result?: string }>;
+  };
+  fs: {
+    downloadFile(path: string): Promise<Buffer>;
+    uploadFile(content: Buffer, path: string): Promise<void>;
+  };
+  git: {
+    clone(url: string, destPath: string): Promise<void>;
+  };
+}
+
+interface DaytonaClient {
+  create(opts: { language?: string; envVars?: Record<string, string> }): Promise<DaytonaSandboxInstance>;
+}
+
 interface DaytonaConfig {
   apiKey: string;
   target?: string;
 }
 
 class DaytonaSandboxHandle implements SandboxHandle {
-  private sandbox: any;
+  private sandbox: DaytonaSandboxInstance;
 
-  constructor(sandbox: any) {
+  constructor(sandbox: DaytonaSandboxInstance) {
     this.sandbox = sandbox;
   }
 
@@ -50,17 +69,18 @@ class DaytonaSandboxHandle implements SandboxHandle {
 }
 
 export class DaytonaSandbox implements SandboxProvider {
-  private daytona: any;
+  private daytona: DaytonaClient | undefined;
+  private initPromise: Promise<void>;
 
   constructor(config: DaytonaConfig) {
-    // Dynamically import @daytonaio/sdk so it remains an optional dependency
-    this.init(config);
+    this.initPromise = this.init(config);
   }
 
   private async init(config: DaytonaConfig): Promise<void> {
     try {
+      // @ts-expect-error — optional dependency, not installed at dev time
       const { Daytona } = await import("@daytonaio/sdk");
-      this.daytona = new Daytona({ apiKey: config.apiKey, target: config.target });
+      this.daytona = new Daytona({ apiKey: config.apiKey, target: config.target }) as DaytonaClient;
     } catch {
       throw new Error(
         "Daytona SDK not installed. Install it with: pnpm add @daytonaio/sdk\n" +
@@ -70,6 +90,7 @@ export class DaytonaSandbox implements SandboxProvider {
   }
 
   async create(opts?: SandboxOpts): Promise<SandboxHandle> {
+    await this.initPromise;
     if (!this.daytona) {
       throw new Error("Daytona SDK not initialized");
     }

@@ -16,7 +16,7 @@ import {
   type AgentAdapter,
   type AgentConfig,
   type LLMProvider,
-} from "@fabrik/core";
+} from "@fabriklabs/core";
 import { loadConfig } from "../config.js";
 
 export interface RunOptions {
@@ -90,6 +90,8 @@ export async function runRun(options: RunOptions): Promise<void> {
   const runner = new ScenarioRunner(adapter, llmProvider, {
     timeout: options.timeout ?? config.eval?.defaultTimeout ?? 30000,
     agentProfile,
+    retries: config.eval?.retries,
+    parallelism: options.parallel ?? config.eval?.parallelism,
   });
 
   const results = await runner.runAll(filtered);
@@ -140,6 +142,10 @@ function buildAgentConfig(agent: {
   type: string;
   url?: string;
   headers?: Record<string, string>;
+  requestFormat?: "messages" | "legacy";
+  bodyTemplate?: (msg: string, ctx?: { conversationId: string; turns: { role: string; message: string }[] }) => unknown;
+  responseParser?: (data: unknown) => string;
+  streaming?: boolean;
 }): AgentConfig {
   if (agent.type === "http") {
     if (!agent.url) throw new Error("agent.url is required for HTTP agents");
@@ -147,6 +153,10 @@ function buildAgentConfig(agent: {
       type: "http",
       url: agent.url,
       headers: agent.headers,
+      requestFormat: agent.requestFormat,
+      bodyTemplate: agent.bodyTemplate,
+      responseParser: agent.responseParser,
+      streaming: agent.streaming,
     };
   }
   throw new Error(`Unsupported agent type: ${agent.type}`);

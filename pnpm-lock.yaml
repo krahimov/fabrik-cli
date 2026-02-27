@@ -8,10 +8,10 @@ importers:
 
   .:
     dependencies:
-      '@fabrik/cli':
+      '@fabriklabs/cli':
         specifier: workspace:*
         version: link:packages/cli
-      '@fabrik/core':
+      '@fabriklabs/core':
         specifier: workspace:*
         version: link:packages/core
     devDependencies:
@@ -24,7 +24,7 @@ importers:
 
   packages/cli:
     dependencies:
-      '@fabrik/core':
+      '@fabriklabs/core':
         specifier: workspace:*
         version: link:../core
       chalk:

@@ -1,7 +1,26 @@
 {
-  "name": "@fabrik/cli",
-  "version": "0.1.0",
+  "name": "@fabriklabs/cli",
+  "version": "0.1.11",
+  "description": "CLI for Fabrik — AI agent testing framework",
   "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/krahimov/fabrik-cli.git",
+    "directory": "packages/cli"
+  },
+  "keywords": [
+    "ai",
+    "testing",
+    "agents",
+    "llm",
+    "cli",
+    "fabrik"
+  ],
+  "files": [
+    "bin",
+    "src"
+  ],
   "main": "./src/config.ts",
   "exports": {
     ".": "./src/config.ts"
@@ -15,15 +34,18 @@
     "clean": "echo 'nothing to clean'"
   },
   "dependencies": {
-    "@fabrik/core": "workspace:*",
+    "@fabriklabs/core": "workspace:*",
     "chalk": "^5.4.0",
     "cli-table3": "^0.6.5",
     "commander": "^13.0.0",
     "cosmiconfig": "^9.0.0",
-    "tsx": "^4.19.0"
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  },
+  "peerDependencies": {
+    "@fabriklabs/core": "^0.1.0"
   },
   "devDependencies": {
-    "typescript": "^5.7.0",
     "@types/node": "^22.0.0"
   }
 }

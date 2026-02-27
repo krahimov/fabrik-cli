@@ -7,7 +7,7 @@ import {
   type DiffReport,
   type ScenarioDiff,
   type DiffStatus,
-} from "@fabrik/core";
+} from "@fabriklabs/core";
 import { loadConfig } from "../config.js";
 
 export interface DiffOptions {

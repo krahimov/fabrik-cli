@@ -1,5 +1,6 @@
 import type { AgentResponse } from "../adapter/interface.js";
 import type { AgentProfile } from "../discovery/agent-profile.js";
+import type { FabrikAssert } from "../assert/api.js";
 
 export interface Persona {
   role: string;
@@ -37,6 +38,7 @@ export interface AgentHandle {
 
 export interface ScenarioContext {
   agent: AgentHandle;
+  assert: FabrikAssert;
   profile?: AgentProfile;
   scores: Map<string, number>;
   score(name: string, value: number): void;

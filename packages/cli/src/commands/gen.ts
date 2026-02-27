@@ -14,7 +14,7 @@ import {
   type AgentProfile,
   type AgentSource,
   type FileReader,
-} from "@fabrik/core";
+} from "@fabriklabs/core";
 import { loadConfig } from "../config.js";
 import { LocalSandbox } from "../sandbox/local.js";
 

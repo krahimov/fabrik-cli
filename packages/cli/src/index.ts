@@ -1,15 +1,22 @@
 import { Command } from "commander";
+import { createRequire } from "node:module";
 import { runInit } from "./commands/init.js";
 import { runGen } from "./commands/gen.js";
 import { runRun } from "./commands/run.js";
 import { runDiff } from "./commands/diff.js";
+
+const require = createRequire(import.meta.url);
+const packageVersion =
+  process.env.FABRIK_CLI_VERSION ??
+  (require("../package.json") as { version?: string }).version ??
+  "0.0.0";
 
 const program = new Command();
 
 program
   .name("fabrik")
   .description("Agent evaluation harness — pytest for AI agents")
-  .version("0.1.0");
+  .version(packageVersion);
 
 program
   .command("init")
